@@ -1,324 +1,141 @@
+-- ================================================================
+-- Gift Card Shop Database Schema
+-- ================================================================
 -- phpMyAdmin SQL Dump
 -- version 5.2.0
 -- https://www.phpmyadmin.net/
 --
--- Host: localhost:8889
--- Generation Time: Nov 10, 2024 at 02:47 PM
+-- Host: localhost
 -- Server version: 5.7.39
 -- PHP Version: 8.2.0
-
-SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
-START TRANSACTION;
-SET time_zone = "+00:00";
-
-
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
 /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
 /*!40101 SET NAMES utf8mb4 */;
 
---
 -- Database: `GiftCardShop`
---
+-- ================================================================
+-- This SQL script creates and populates a GiftCardShop database with
+-- tables for categories, users, gift cards, gift card codes, orders, 
+-- payments, and transactions. It also sets up foreign key relationships 
+-- to maintain data integrity.
+-- All tables use the utf8mb4 character set and utf8mb4_unicode_ci collation 
+-- to support multilingual text storage.
+-- ================================================================
 
--- --------------------------------------------------------
+-- Create Database with utf8mb4 collation
+CREATE DATABASE GiftCardShop CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE GiftCardShop;
 
---
--- Table structure for table `Categories`
---
+-- Create Categories Table with utf8mb4 collation
+CREATE TABLE Categories (
+    category_id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(50) NOT NULL COLLATE utf8mb4_unicode_ci
+);
 
-CREATE TABLE `Categories` (
-  `category_id` int(11) NOT NULL,
-  `name` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+-- Sample data for Categories
+INSERT INTO Categories (name) VALUES
+('E-commerce'),
+('Entertainment'),
+('Food & Beverage');
 
---
--- Dumping data for table `Categories`
---
+-- Create Users Table with utf8mb4 collation
+CREATE TABLE Users (
+    user_id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) NOT NULL COLLATE utf8mb4_unicode_ci,
+    email VARCHAR(100) NOT NULL COLLATE utf8mb4_unicode_ci,
+    password_hash VARCHAR(255) NOT NULL COLLATE utf8mb4_unicode_ci,
+    phone_number VARCHAR(15) COLLATE utf8mb4_unicode_ci,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
-INSERT INTO `Categories` (`category_id`, `name`) VALUES
-(1, 'E-commerce'),
-(2, 'Entertainment'),
-(3, 'Food & Beverage');
+-- Sample data for Users
+INSERT INTO Users (username, email, password_hash, phone_number) VALUES
+('JohnDoe', 'johndoe@example.com', 'hashedpassword123', '123-456-7890'),
+('JaneSmith', 'janesmith@example.com', 'hashedpassword456', '987-654-3210'),
+('AliceJohnson', 'alicej@example.com', 'hashedpassword789', '555-123-4567');
 
--- --------------------------------------------------------
+-- Create Gift Cards Table with utf8mb4 collation
+CREATE TABLE GiftCards (
+    giftcard_id INT AUTO_INCREMENT PRIMARY KEY,
+    category_id INT,
+    name VARCHAR(100) NOT NULL COLLATE utf8mb4_unicode_ci,
+    value DECIMAL(10, 2) NOT NULL,
+    description TEXT COLLATE utf8mb4_unicode_ci,
+    stock INT DEFAULT 100,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (category_id) REFERENCES Categories(category_id)
+);
 
---
--- Table structure for table `GiftCardCodes`
---
+-- Sample data for Gift Cards
+INSERT INTO GiftCards (category_id, name, value, description, stock) VALUES
+(1, 'Amazon Gift Card', 50.00, 'A gift card for shopping on Amazon.', 200),
+(2, 'iTunes Gift Card', 25.00, 'A gift card for purchasing music, movies, and more on iTunes.', 150),
+(3, 'Starbucks Gift Card', 15.00, 'A gift card for purchasing coffee and snacks at Starbucks.', 300);
 
-CREATE TABLE `GiftCardCodes` (
-  `code_id` int(11) NOT NULL,
-  `giftcard_id` int(11) DEFAULT NULL,
-  `code` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `is_used` tinyint(1) DEFAULT '0',
-  `issued_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+-- Create Gift Card Codes Table with utf8mb4 collation
+CREATE TABLE GiftCardCodes (
+    code_id INT AUTO_INCREMENT PRIMARY KEY,
+    giftcard_id INT,
+    code VARCHAR(50) NOT NULL UNIQUE COLLATE utf8mb4_unicode_ci,
+    is_used BOOLEAN DEFAULT FALSE,
+    issued_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (giftcard_id) REFERENCES GiftCards(giftcard_id)
+);
 
---
--- Dumping data for table `GiftCardCodes`
---
+-- Sample data for Gift Card Codes
+INSERT INTO GiftCardCodes (giftcard_id, code) VALUES
+(1, 'AMZ12345'),
+(1, 'AMZ67890'),
+(2, 'ITUN12345'),
+(2, 'ITUN67890'),
+(3, 'STB12345');
 
-INSERT INTO `GiftCardCodes` (`code_id`, `giftcard_id`, `code`, `is_used`, `issued_at`) VALUES
-(1, 1, 'AMZ12345', 0, '2024-11-10 13:49:18'),
-(2, 1, 'AMZ67890', 0, '2024-11-10 13:49:18'),
-(3, 2, 'ITUN12345', 0, '2024-11-10 13:49:18'),
-(4, 2, 'ITUN67890', 0, '2024-11-10 13:49:18'),
-(5, 3, 'STB12345', 0, '2024-11-10 13:49:18');
+-- Create Orders Table with utf8mb4 collation
+CREATE TABLE Orders (
+    order_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT,
+    total_amount DECIMAL(10, 2) NOT NULL,
+    order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES Users(user_id)
+);
 
--- --------------------------------------------------------
+-- Sample data for Orders
+INSERT INTO Orders (user_id, total_amount) VALUES
+(1, 100.00),
+(2, 50.00),
+(3, 45.00);
 
---
--- Table structure for table `GiftCards`
---
+-- Create Payments Table with utf8mb4 collation
+CREATE TABLE Payments (
+    payment_id INT AUTO_INCREMENT PRIMARY KEY,
+    order_id INT,
+    payment_method VARCHAR(50) NOT NULL COLLATE utf8mb4_unicode_ci,
+    payment_status VARCHAR(20) DEFAULT 'Pending' COLLATE utf8mb4_unicode_ci,
+    payment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (order_id) REFERENCES Orders(order_id)
+);
 
-CREATE TABLE `GiftCards` (
-  `giftcard_id` int(11) NOT NULL,
-  `category_id` int(11) DEFAULT NULL,
-  `name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `value` decimal(10,2) NOT NULL,
-  `description` text COLLATE utf8mb4_unicode_ci,
-  `stock` int(11) DEFAULT '100',
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+-- Sample data for Payments
+INSERT INTO Payments (order_id, payment_method, payment_status) VALUES
+(1, 'Credit Card', 'Completed'),
+(2, 'PayPal', 'Pending'),
+(3, 'Debit Card', 'Completed');
 
---
--- Dumping data for table `GiftCards`
---
+-- Create Transactions Table with utf8mb4 collation
+CREATE TABLE Transactions (
+    transaction_id INT AUTO_INCREMENT PRIMARY KEY,
+    order_id INT,
+    giftcard_code_id INT,
+    transaction_amount DECIMAL(10, 2),
+    transaction_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (order_id) REFERENCES Orders(order_id),
+    FOREIGN KEY (giftcard_code_id) REFERENCES GiftCardCodes(code_id)
+);
 
-INSERT INTO `GiftCards` (`giftcard_id`, `category_id`, `name`, `value`, `description`, `stock`, `created_at`) VALUES
-(1, 1, 'Amazon Gift Card', '50.00', 'A gift card for shopping on Amazon.', 200, '2024-11-10 13:49:18'),
-(2, 2, 'iTunes Gift Card', '25.00', 'A gift card for purchasing music, movies, and more on iTunes.', 150, '2024-11-10 13:49:18'),
-(3, 3, 'Starbucks Gift Card', '15.00', 'A gift card for purchasing coffee and snacks at Starbucks.', 300, '2024-11-10 13:49:18');
-
--- --------------------------------------------------------
-
---
--- Table structure for table `Orders`
---
-
-CREATE TABLE `Orders` (
-  `order_id` int(11) NOT NULL,
-  `user_id` int(11) DEFAULT NULL,
-  `total_amount` decimal(10,2) NOT NULL,
-  `order_date` timestamp NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Dumping data for table `Orders`
---
-
-INSERT INTO `Orders` (`order_id`, `user_id`, `total_amount`, `order_date`) VALUES
-(1, 1, '100.00', '2024-11-10 13:49:18'),
-(2, 2, '50.00', '2024-11-10 13:49:18'),
-(3, 3, '45.00', '2024-11-10 13:49:18');
-
--- --------------------------------------------------------
-
---
--- Table structure for table `Payments`
---
-
-CREATE TABLE `Payments` (
-  `payment_id` int(11) NOT NULL,
-  `order_id` int(11) DEFAULT NULL,
-  `payment_method` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `payment_status` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT 'Pending',
-  `payment_date` timestamp NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Dumping data for table `Payments`
---
-
-INSERT INTO `Payments` (`payment_id`, `order_id`, `payment_method`, `payment_status`, `payment_date`) VALUES
-(1, 1, 'Credit Card', 'Completed', '2024-11-10 13:49:18'),
-(2, 2, 'PayPal', 'Pending', '2024-11-10 13:49:18'),
-(3, 3, 'Debit Card', 'Completed', '2024-11-10 13:49:18');
-
--- --------------------------------------------------------
-
---
--- Table structure for table `Transactions`
---
-
-CREATE TABLE `Transactions` (
-  `transaction_id` int(11) NOT NULL,
-  `order_id` int(11) DEFAULT NULL,
-  `giftcard_code_id` int(11) DEFAULT NULL,
-  `transaction_amount` decimal(10,2) DEFAULT NULL,
-  `transaction_date` timestamp NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Dumping data for table `Transactions`
---
-
-INSERT INTO `Transactions` (`transaction_id`, `order_id`, `giftcard_code_id`, `transaction_amount`, `transaction_date`) VALUES
-(1, 1, 1, '50.00', '2024-11-10 13:49:18'),
-(2, 1, 2, '50.00', '2024-11-10 13:49:18'),
-(3, 2, 3, '25.00', '2024-11-10 13:49:18'),
-(4, 3, 4, '15.00', '2024-11-10 13:49:18');
-
--- --------------------------------------------------------
-
---
--- Table structure for table `Users`
---
-
-CREATE TABLE `Users` (
-  `user_id` int(11) NOT NULL,
-  `username` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `email` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `password_hash` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `phone_number` varchar(15) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Dumping data for table `Users`
---
-
-INSERT INTO `Users` (`user_id`, `username`, `email`, `password_hash`, `phone_number`, `created_at`) VALUES
-(1, 'JohnDoe', 'johndoe@example.com', '9fc6dc6eb8fb685e679343358fadbf09', '123-456-7890', '2024-11-10 13:49:18'),
-(2, 'JaneSmith', 'janesmith@example.com', 'f50ba7ac5494615fd8c3ce0b4a56b564', '987-654-3210', '2024-11-10 13:49:18'),
-(3, 'AliceJohnson', 'alicej@example.com', '6dbf3e3a7c28aa6fefdbf70a86aa9945', '555-123-4567', '2024-11-10 13:49:18');
-
---
--- Indexes for dumped tables
---
-
---
--- Indexes for table `Categories`
---
-ALTER TABLE `Categories`
-  ADD PRIMARY KEY (`category_id`);
-
---
--- Indexes for table `GiftCardCodes`
---
-ALTER TABLE `GiftCardCodes`
-  ADD PRIMARY KEY (`code_id`),
-  ADD UNIQUE KEY `code` (`code`),
-  ADD KEY `giftcard_id` (`giftcard_id`);
-
---
--- Indexes for table `GiftCards`
---
-ALTER TABLE `GiftCards`
-  ADD PRIMARY KEY (`giftcard_id`),
-  ADD KEY `category_id` (`category_id`);
-
---
--- Indexes for table `Orders`
---
-ALTER TABLE `Orders`
-  ADD PRIMARY KEY (`order_id`),
-  ADD KEY `user_id` (`user_id`);
-
---
--- Indexes for table `Payments`
---
-ALTER TABLE `Payments`
-  ADD PRIMARY KEY (`payment_id`),
-  ADD KEY `order_id` (`order_id`);
-
---
--- Indexes for table `Transactions`
---
-ALTER TABLE `Transactions`
-  ADD PRIMARY KEY (`transaction_id`),
-  ADD KEY `order_id` (`order_id`),
-  ADD KEY `giftcard_code_id` (`giftcard_code_id`);
-
---
--- Indexes for table `Users`
---
-ALTER TABLE `Users`
-  ADD PRIMARY KEY (`user_id`);
-
---
--- AUTO_INCREMENT for dumped tables
---
-
---
--- AUTO_INCREMENT for table `Categories`
---
-ALTER TABLE `Categories`
-  MODIFY `category_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
-
---
--- AUTO_INCREMENT for table `GiftCardCodes`
---
-ALTER TABLE `GiftCardCodes`
-  MODIFY `code_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
-
---
--- AUTO_INCREMENT for table `GiftCards`
---
-ALTER TABLE `GiftCards`
-  MODIFY `giftcard_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
-
---
--- AUTO_INCREMENT for table `Orders`
---
-ALTER TABLE `Orders`
-  MODIFY `order_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
-
---
--- AUTO_INCREMENT for table `Payments`
---
-ALTER TABLE `Payments`
-  MODIFY `payment_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
-
---
--- AUTO_INCREMENT for table `Transactions`
---
-ALTER TABLE `Transactions`
-  MODIFY `transaction_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
-
---
--- AUTO_INCREMENT for table `Users`
---
-ALTER TABLE `Users`
-  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
-
---
--- Constraints for dumped tables
---
-
---
--- Constraints for table `GiftCardCodes`
---
-ALTER TABLE `GiftCardCodes`
-  ADD CONSTRAINT `giftcardcodes_ibfk_1` FOREIGN KEY (`giftcard_id`) REFERENCES `GiftCards` (`giftcard_id`);
-
---
--- Constraints for table `GiftCards`
---
-ALTER TABLE `GiftCards`
-  ADD CONSTRAINT `giftcards_ibfk_1` FOREIGN KEY (`category_id`) REFERENCES `Categories` (`category_id`);
-
---
--- Constraints for table `Orders`
---
-ALTER TABLE `Orders`
-  ADD CONSTRAINT `orders_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `Users` (`user_id`);
-
---
--- Constraints for table `Payments`
---
-ALTER TABLE `Payments`
-  ADD CONSTRAINT `payments_ibfk_1` FOREIGN KEY (`order_id`) REFERENCES `Orders` (`order_id`);
-
---
--- Constraints for table `Transactions`
---
-ALTER TABLE `Transactions`
-  ADD CONSTRAINT `transactions_ibfk_1` FOREIGN KEY (`order_id`) REFERENCES `Orders` (`order_id`),
-  ADD CONSTRAINT `transactions_ibfk_2` FOREIGN KEY (`giftcard_code_id`) REFERENCES `GiftCardCodes` (`code_id`);
-COMMIT;
-
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
-/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+-- Sample data for Transactions
+INSERT INTO Transactions (order_id, giftcard_code_id, transaction_amount) VALUES
+(1, 1, 50.00),
+(1, 2, 50.00),
+(2, 3, 25.00),
+(3, 4, 15.00);
